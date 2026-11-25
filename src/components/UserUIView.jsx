@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, compareVersions } from '../services/api';
+import { apiGet } from '../services/api';
 
 export const UserUIView = () => {
   const navigate = useNavigate();
@@ -12,6 +12,14 @@ export const UserUIView = () => {
   const [selectedVersion, setSelectedVersion] = useState(
     () => localStorage.getItem('user_app_version') || '1.0.0',
   );
+  const [selectedPlatform, setSelectedPlatform] = useState(() => {
+    const saved = localStorage.getItem('user_app_platform');
+    if (!saved) {
+      localStorage.setItem('user_app_platform', 'ANDROID');
+      return 'ANDROID';
+    }
+    return saved;
+  });
   const [toastMessage, setToastMessage] = useState('');
 
   // Patch popup state
@@ -60,15 +68,20 @@ export const UserUIView = () => {
           '1.0.0'
         ).replace(/^v/i, '').trim();
 
+        const platform =
+          localStorage.getItem('user_app_platform') ||
+          selectedPlatform ||
+          'ANDROID';
+
         const res = await apiGet(
-          `/patch-releases/check?currentVersion=${currentVer}&platform=ALL`,
+          `/patch-releases/check?currentVersion=${currentVer}&platform=${platform}`,
         );
 
         if (res && res.updateAvailable && !isSkipped) {
           const latestVer = (res.latestVersion || '').replace(/^v/i, '').trim();
 
-          // If already on latest version or newer, do not show popup
-          if (compareVersions(latestVer, currentVer) <= 0) {
+          // Only show popup when version is different from the latest patch release
+          if (latestVer === currentVer) {
             return;
           }
 
@@ -94,7 +107,7 @@ export const UserUIView = () => {
 
     checkForUpdates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVersion]);
+  }, [selectedVersion, selectedPlatform]);
 
   // Global listeners for middleware patch release enforcement
   useEffect(() => {
@@ -107,7 +120,7 @@ export const UserUIView = () => {
         '1.0.0'
       ).replace(/^v/i, '').trim();
 
-      if (compareVersions(latestVer, currentVer) <= 0) {
+      if (latestVer === currentVer) {
         return;
       }
 
@@ -132,8 +145,7 @@ export const UserUIView = () => {
         '1.0.0'
       ).replace(/^v/i, '').trim();
 
-      // If already on latest version or newer, do not show popup
-      if (compareVersions(latestVer, currentVer) <= 0) {
+      if (latestVer === currentVer) {
         return;
       }
 
@@ -292,6 +304,39 @@ export const UserUIView = () => {
 
         {/* User Info & App Version Display */}
         <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center bg-slate-100 border border-slate-200 rounded-lg p-0.5 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('user_app_platform', 'ANDROID');
+                setSelectedPlatform('ANDROID');
+                setIsSkipped(false);
+              }}
+              className={`px-2 py-0.5 rounded-md transition-colors ${
+                selectedPlatform === 'ANDROID'
+                  ? 'bg-emerald-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Android
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('user_app_platform', 'IOS');
+                setSelectedPlatform('IOS');
+                setIsSkipped(false);
+              }}
+              className={`px-2 py-0.5 rounded-md transition-colors ${
+                selectedPlatform === 'IOS'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              iOS
+            </button>
+          </div>
+
           <span className="px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700">
             v{selectedVersion}
           </span>

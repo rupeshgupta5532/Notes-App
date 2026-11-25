@@ -44,9 +44,15 @@ export async function apiRequest(endpoint, options = {}) {
     APP_CONFIG.version ||
     '1.0.0';
 
+  const appPlatform =
+    localStorage.getItem('user_app_platform') ||
+    APP_CONFIG.platform ||
+    'ANDROID';
+
   const headers = {
     'Content-Type': 'application/json',
     'X-App-Version': appVersion,
+    'X-Platform': appPlatform,
     ...(token
       ? {
           Authorization: `Bearer ${token}; version=${appVersion}`,
@@ -77,8 +83,8 @@ export async function apiRequest(endpoint, options = {}) {
         '1.0.0'
       ).replace(/^v/i, '').trim();
 
-      // Only dispatch if latestVersion is strictly greater than current version
-      if (compareVersions(latestVersion, currentStoredVer) > 0) {
+      // Dispatch if latestVersion is DIFFERENT from current version
+      if (latestVersion && latestVersion !== currentStoredVer) {
         const updateType = response.headers.get('x-update-type') || 'OPTIONAL';
         const rawTitle = response.headers.get('x-update-title');
         const rawContent = response.headers.get('x-update-content');
@@ -121,7 +127,7 @@ export async function apiRequest(endpoint, options = {}) {
           '1.0.0'
         ).replace(/^v/i, '').trim();
 
-        if (compareVersions(latestVer, currentStoredVer) > 0) {
+        if (latestVer && latestVer !== currentStoredVer) {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(
               new CustomEvent('app:force_update_required', {

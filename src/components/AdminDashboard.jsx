@@ -13,6 +13,7 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
   const [loadingReleases, setLoadingReleases] = useState(true);
   const [showPatchModal, setShowPatchModal] = useState(false);
   const [patchVersion, setPatchVersion] = useState('');
+  const [isCustomVersion, setIsCustomVersion] = useState(true);
   const [patchTitle, setPatchTitle] = useState('');
   const [patchContent, setPatchContent] = useState('');
   const [patchType, setPatchType] = useState('OPTIONAL');
@@ -60,6 +61,7 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
 
   // Patch Release Handlers
   const openNewPatchModal = () => {
+    setIsCustomVersion(true);
     setPatchVersion('');
     setPatchTitle('');
     setPatchContent('');
@@ -138,13 +140,22 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
     }
   };
 
+  const existingVersions = Array.from(
+    new Set(
+      releases.map((r) => r.version?.replace(/^v/i, "").trim()).filter(Boolean),
+    ),
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans pb-16">
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-6 sm:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight"> Admin Dashboard</h1>
+            <h1 className="text-base font-bold text-slate-900 tracking-tight">
+              {" "}
+              Admin Dashboard
+            </h1>
           </div>
         </div>
 
@@ -152,21 +163,21 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
         <div className="flex items-center gap-3 text-xs">
           <nav className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
-              onClick={() => setActiveTab('patches')}
+              onClick={() => setActiveTab("patches")}
               className={`px-3.5 py-1.5 font-semibold rounded-lg transition-all ${
-                activeTab === 'patches'
-                  ? 'bg-white text-indigo-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                activeTab === "patches"
+                  ? "bg-white text-indigo-700 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Patch Releases
             </button>
             <button
-              onClick={() => setActiveTab('documents')}
+              onClick={() => setActiveTab("documents")}
               className={`px-3.5 py-1.5 font-semibold rounded-lg transition-all ${
-                activeTab === 'documents'
-                  ? 'bg-white text-indigo-700 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
+                activeTab === "documents"
+                  ? "bg-white text-indigo-700 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Static Documents
@@ -174,14 +185,18 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
           </nav>
 
           <div className="text-right hidden sm:block">
-            <span className="font-bold text-slate-800 text-xs block">{user?.name || 'Administrator'}</span>
-            <span className="text-[10px] text-emerald-600 font-semibold block">{user?.role || 'ADMIN'}</span>
+            <span className="font-bold text-slate-800 text-xs block">
+              {user?.name || "Administrator"}
+            </span>
+            <span className="text-[10px] text-emerald-600 font-semibold block">
+              {user?.role || "ADMIN"}
+            </span>
           </div>
 
           <button
             onClick={() => {
               logout();
-              navigate('/login');
+              navigate("/login");
             }}
             className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100"
           >
@@ -193,14 +208,13 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
       {/* Main Content Area */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 mt-8">
         {/* TAB 1: Patch Releases */}
-        {activeTab === 'patches' && (
+        {activeTab === "patches" && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
                   All Patches
                 </h2>
-                
               </div>
 
               <button
@@ -212,10 +226,13 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
             </div>
 
             {loadingReleases ? (
-              <div className="text-center py-12 text-xs text-slate-400">Loading releases...</div>
+              <div className="text-center py-12 text-xs text-slate-400">
+                Loading releases...
+              </div>
             ) : releases.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500 shadow-xs">
-                No patch releases created yet. Click &quot;+ New Patch Release&quot; to deploy an update.
+                No patch releases created yet. Click &quot;+ New Patch
+                Release&quot; to deploy an update.
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -235,28 +252,33 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                       {releases.map((rel) => {
                         const id = rel._id || rel.id;
                         return (
-                          <tr key={id} className="hover:bg-slate-50/60 transition-colors">
+                          <tr
+                            key={id}
+                            className="hover:bg-slate-50/60 transition-colors"
+                          >
                             <td className="py-3 px-4 font-mono font-bold text-indigo-600">
                               v{rel.version}
                             </td>
                             <td className="py-3 px-4">
                               <span
                                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                  rel.platform === 'IOS'
-                                    ? 'bg-sky-50 text-sky-700 border border-sky-200'
-                                    : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  rel.platform === "IOS"
+                                    ? "bg-sky-50 text-sky-700 border border-sky-200"
+                                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                 }`}
                               >
-                                {rel.platform === 'IOS' ? 'iOS' : 'Android'}
+                                {rel.platform === "IOS" ? "iOS" : "Android"}
                               </span>
                             </td>
-                            <td className="py-3 px-4 font-semibold text-slate-900">{rel.title}</td>
+                            <td className="py-3 px-4 font-semibold text-slate-900">
+                              {rel.title}
+                            </td>
                             <td className="py-3 px-4">
                               <span
                                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                  rel.updateType === 'FORCE'
-                                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                  rel.updateType === "FORCE"
+                                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                    : "bg-amber-50 text-amber-700 border border-amber-200"
                                 }`}
                               >
                                 {rel.updateType}
@@ -267,7 +289,10 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                                 Active
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-slate-500 max-w-xs truncate" title={rel.content}>
+                            <td
+                              className="py-3 px-4 text-slate-500 max-w-xs truncate"
+                              title={rel.content}
+                            >
                               {rel.content}
                             </td>
                           </tr>
@@ -282,7 +307,7 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
         )}
 
         {/* TAB 2: Static Documents */}
-        {activeTab === 'documents' && (
+        {activeTab === "documents" && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
               <div>
@@ -290,7 +315,8 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                   Static Document Management
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  Manage Privacy Policy, Terms & Conditions, My Benefits, and About App documents.
+                  Manage Privacy Policy, Terms & Conditions, My Benefits, and
+                  About App documents.
                 </p>
               </div>
 
@@ -303,10 +329,13 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
             </div>
 
             {loadingDocs ? (
-              <div className="text-center py-12 text-xs text-slate-400">Loading documents...</div>
+              <div className="text-center py-12 text-xs text-slate-400">
+                Loading documents...
+              </div>
             ) : documents.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-xs text-slate-500 shadow-xs">
-                No documents created yet. Click &quot;+ New Document&quot; to configure one.
+                No documents created yet. Click &quot;+ New Document&quot; to
+                configure one.
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -326,7 +355,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                           </span>
                         )}
                       </div>
-                      <h3 className="text-base font-bold text-slate-900 mb-1">{doc.title}</h3>
+                      <h3 className="text-base font-bold text-slate-900 mb-1">
+                        {doc.title}
+                      </h3>
                       <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed mb-4">
                         {doc.content}
                       </p>
@@ -334,7 +365,7 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
 
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                       <span className="text-[11px] text-slate-400">
-                        By {doc.updatedBy || 'Admin'}
+                        By {doc.updatedBy || "Admin"}
                       </span>
                       <div className="space-x-2">
                         <button
@@ -378,34 +409,87 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
             <form onSubmit={handleSavePatch} className="space-y-4 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Version (e.g. 2.1)</label>
-                  <input
-                    type="text"
-                    value={patchVersion}
-                    onChange={(e) => setPatchVersion(e.target.value)}
-                    placeholder="2.1"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800"
-                    required
-                  />
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Select Version or Create New
+                  </label>
+                  <select
+                    value={isCustomVersion ? "__NEW__" : patchVersion}
+                    onChange={(e) => {
+                      if (e.target.value === "__NEW__") {
+                        setIsCustomVersion(true);
+                        setPatchVersion("");
+                      } else {
+                        setIsCustomVersion(false);
+                        const selectedVer = e.target.value;
+                        setPatchVersion(selectedVer);
+                        const prev = releases.find(
+                          (r) =>
+                            r.version?.replace(/^v/i, "").trim() ===
+                            selectedVer,
+                        );
+                        if (prev) {
+                          setPatchTitle(
+                            `Rollback to v${selectedVer}: ${prev.title || "Stable Release"}`,
+                          );
+                          setPatchContent(
+                            prev.content ||
+                              `Re-releasing stable version v${selectedVer}`,
+                          );
+                          if (prev.platform) setPatchPlatform(prev.platform);
+                          if (prev.updateType) setPatchType(prev.updateType);
+                        }
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-2"
+                  >
+                    <option value="__NEW__">➕ Create New Version</option>
+                    {existingVersions.map((ver) => (
+                      <option key={ver} value={ver}>
+                        v{ver} (Switch back / Rollback)
+                      </option>
+                    ))}
+                  </select>
+
+                  {isCustomVersion && (
+                    <input
+                      type="text"
+                      value={patchVersion}
+                      onChange={(e) => setPatchVersion(e.target.value)}
+                      placeholder="e.g. 4.2.5"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 text-xs"
+                      required
+                    />
+                  )}
                 </div>
                 <div className="relative">
-                  <label className="block text-slate-700 font-semibold mb-1">Update Type</label>
+                  <label className="block text-slate-700 font-semibold mb-1">
+                    Update Type
+                  </label>
                   <button
                     type="button"
                     onClick={() => setIsPatchTypeOpen((prev) => !prev)}
                     className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 text-xs transition-colors"
                   >
                     <span className="flex items-center gap-2 font-medium">
-                      <span className={`w-2 h-2 rounded-full ${patchType === 'FORCE' ? 'bg-rose-500' : 'bg-blue-500'}`} />
-                      {patchType === 'FORCE' ? 'FORCE (Mandatory)' : 'OPTIONAL (Skippable)'}
+                      <span
+                        className={`w-2 h-2 rounded-full ${patchType === "FORCE" ? "bg-rose-500" : "bg-blue-500"}`}
+                      />
+                      {patchType === "FORCE"
+                        ? "FORCE (Mandatory)"
+                        : "OPTIONAL (Skippable)"}
                     </span>
                     <svg
-                      className={`w-4 h-4 text-slate-400 transition-transform ${isPatchTypeOpen ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 text-slate-400 transition-transform ${isPatchTypeOpen ? "rotate-180" : ""}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </button>
 
@@ -414,41 +498,55 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                       <button
                         type="button"
                         onClick={() => {
-                          setPatchType('OPTIONAL');
+                          setPatchType("OPTIONAL");
                           setIsPatchTypeOpen(false);
                         }}
                         className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                          patchType === 'OPTIONAL' ? 'bg-indigo-50/70 text-indigo-700 font-bold' : 'text-slate-700'
+                          patchType === "OPTIONAL"
+                            ? "bg-indigo-50/70 text-indigo-700 font-bold"
+                            : "text-slate-700"
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-blue-500" />
                           <div>
-                            <p className="font-semibold">OPTIONAL (Skippable)</p>
-                            <p className="text-[10px] text-slate-400 font-normal">Clients can skip this release</p>
+                            <p className="font-semibold">
+                              OPTIONAL (Skippable)
+                            </p>
+                            <p className="text-[10px] text-slate-400 font-normal">
+                              Clients can skip this release
+                            </p>
                           </div>
                         </div>
-                        {patchType === 'OPTIONAL' && <span className="font-bold text-indigo-600">✓</span>}
+                        {patchType === "OPTIONAL" && (
+                          <span className="font-bold text-indigo-600">✓</span>
+                        )}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          setPatchType('FORCE');
+                          setPatchType("FORCE");
                           setIsPatchTypeOpen(false);
                         }}
                         className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                          patchType === 'FORCE' ? 'bg-indigo-50/70 text-indigo-700 font-bold' : 'text-slate-700'
+                          patchType === "FORCE"
+                            ? "bg-indigo-50/70 text-indigo-700 font-bold"
+                            : "text-slate-700"
                         }`}
                       >
                         <div className="flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-rose-500" />
                           <div>
                             <p className="font-semibold">FORCE (Mandatory)</p>
-                            <p className="text-[10px] text-slate-400 font-normal">Blocks client app until updated</p>
+                            <p className="text-[10px] text-slate-400 font-normal">
+                              Blocks client app until updated
+                            </p>
                           </div>
                         </div>
-                        {patchType === 'FORCE' && <span className="font-bold text-indigo-600">✓</span>}
+                        {patchType === "FORCE" && (
+                          <span className="font-bold text-indigo-600">✓</span>
+                        )}
                       </button>
                     </div>
                   )}
@@ -457,26 +555,28 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
 
               {/* Platform Selection: Android or iOS */}
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Target Platform</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Target Platform
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setPatchPlatform('ANDROID')}
+                    onClick={() => setPatchPlatform("ANDROID")}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                      patchPlatform === 'ANDROID'
-                        ? 'bg-emerald-50 border-emerald-500 text-emerald-700 font-bold ring-2 ring-emerald-200'
-                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                      patchPlatform === "ANDROID"
+                        ? "bg-emerald-50 border-emerald-500 text-emerald-700 font-bold ring-2 ring-emerald-200"
+                        : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     <span>Android</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPatchPlatform('IOS')}
+                    onClick={() => setPatchPlatform("IOS")}
                     className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                      patchPlatform === 'IOS'
-                        ? 'bg-sky-50 border-sky-500 text-sky-700 font-bold ring-2 ring-sky-200'
-                        : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
+                      patchPlatform === "IOS"
+                        ? "bg-sky-50 border-sky-500 text-sky-700 font-bold ring-2 ring-sky-200"
+                        : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"
                     }`}
                   >
                     <span>iOS</span>
@@ -485,7 +585,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Release Title</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Release Title
+                </label>
                 <input
                   type="text"
                   value={patchTitle}
@@ -497,7 +599,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Release Notes</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Release Notes
+                </label>
                 <textarea
                   rows={4}
                   value={patchContent}
@@ -534,7 +638,7 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
           <div className="w-full max-w-lg bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
               <h3 className="text-lg font-bold text-slate-900">
-                {editingDocId ? 'Edit Document' : 'New Document'}
+                {editingDocId ? "Edit Document" : "New Document"}
               </h3>
               <button
                 onClick={() => setShowDocModal(false)}
@@ -546,7 +650,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
 
             <form onSubmit={handleSaveDoc} className="space-y-4 text-xs">
               <div className="relative">
-                <label className="block text-slate-700 font-semibold mb-1">Document Type</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Document Type
+                </label>
                 <button
                   type="button"
                   disabled={Boolean(editingDocId)}
@@ -554,28 +660,37 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                   className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 text-xs transition-colors disabled:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   <span className="font-medium">
-                    {docType === 'PRIVACY_POLICY' && 'Privacy Policy'}
-                    {docType === 'TERMS_AND_CONDITIONS' && 'Terms and Conditions'}
-                    {docType === 'MY_BENEFITS' && 'My Benefits'}
-                    {docType === 'ABOUT_APP' && 'About App Document'}
+                    {docType === "PRIVACY_POLICY" && "Privacy Policy"}
+                    {docType === "TERMS_AND_CONDITIONS" &&
+                      "Terms and Conditions"}
+                    {docType === "MY_BENEFITS" && "My Benefits"}
+                    {docType === "ABOUT_APP" && "About App Document"}
                   </span>
                   <svg
-                    className={`w-4 h-4 text-slate-400 transition-transform ${isDocTypeOpen ? 'rotate-180' : ''}`}
+                    className={`w-4 h-4 text-slate-400 transition-transform ${isDocTypeOpen ? "rotate-180" : ""}`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
 
                 {isDocTypeOpen && !editingDocId && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-xl shadow-xl z-30 overflow-hidden py-1">
                     {[
-                      { key: 'PRIVACY_POLICY', label: 'Privacy Policy' },
-                      { key: 'TERMS_AND_CONDITIONS', label: 'Terms and Conditions' },
-                      { key: 'MY_BENEFITS', label: 'My Benefits' },
-                      { key: 'ABOUT_APP', label: 'About App Document' },
+                      { key: "PRIVACY_POLICY", label: "Privacy Policy" },
+                      {
+                        key: "TERMS_AND_CONDITIONS",
+                        label: "Terms and Conditions",
+                      },
+                      { key: "MY_BENEFITS", label: "My Benefits" },
+                      { key: "ABOUT_APP", label: "About App Document" },
                     ].map((item) => (
                       <button
                         key={item.key}
@@ -586,11 +701,15 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
                           setIsDocTypeOpen(false);
                         }}
                         className={`w-full text-left px-3.5 py-2 text-xs flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                          docType === item.key ? 'bg-indigo-50/70 text-indigo-700 font-bold' : 'text-slate-700'
+                          docType === item.key
+                            ? "bg-indigo-50/70 text-indigo-700 font-bold"
+                            : "text-slate-700"
                         }`}
                       >
                         <span>{item.label}</span>
-                        {docType === item.key && <span className="font-bold text-indigo-600">✓</span>}
+                        {docType === item.key && (
+                          <span className="font-bold text-indigo-600">✓</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -598,7 +717,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Document Title</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Document Title
+                </label>
                 <input
                   type="text"
                   value={docTitle}
@@ -609,7 +730,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Document Content</label>
+                <label className="block text-slate-700 font-semibold mb-1">
+                  Document Content
+                </label>
                 <textarea
                   rows={6}
                   value={docContent}
