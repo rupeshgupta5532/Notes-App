@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { apiGet } from '../services/api';
+import { apiGet, compareVersions } from '../services/api';
 
 export const UserUIView = () => {
   const navigate = useNavigate();
@@ -51,34 +51,101 @@ export const UserUIView = () => {
 
   useEffect(() => {
     loadDocuments();
+
+    const checkForUpdates = async () => {
+      try {
+        const currentVer = (
+          localStorage.getItem('user_app_version') ||
+          selectedVersion ||
+          '1.0.0'
+        ).replace(/^v/i, '').trim();
+
+        const res = await apiGet(
+          `/patch-releases/check?currentVersion=${currentVer}&platform=ALL`,
+        );
+
+        if (res && res.updateAvailable && !isSkipped) {
+          const latestVer = (res.latestVersion || '').replace(/^v/i, '').trim();
+
+          // If already on latest version or newer, do not show popup
+          if (compareVersions(latestVer, currentVer) <= 0) {
+            return;
+          }
+
+          const isForce = Boolean(res.updateRequired || res.updateType === 'FORCE');
+          setPatchPopup({
+            isForce,
+            latestVersion: latestVer,
+            title:
+              res.title ||
+              (isForce ? 'Mandatory Update Required' : 'New Update Available'),
+            releaseNotes:
+              res.content ||
+              (isForce
+                ? 'A mandatory application patch release must be installed before you can continue accessing the application.'
+                : 'A new optional patch release is available. You can update now or skip.'),
+            currentVersion: currentVer,
+          });
+        }
+      } catch {
+        // Fallback
+      }
+    };
+
+    checkForUpdates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVersion]);
 
   // Global listeners for middleware patch release enforcement
   useEffect(() => {
     const handleForceUpdate = (event) => {
       const data = event.detail;
-      const latestVer = data?.latestVersion || data?.requiredVersion || '1.0.0';
+      const latestVer = (data?.latestVersion || data?.requiredVersion || '1.0.0').replace(/^v/i, '').trim();
+      const currentVer = (
+        localStorage.getItem('user_app_version') ||
+        selectedVersion ||
+        '1.0.0'
+      ).replace(/^v/i, '').trim();
+
+      if (compareVersions(latestVer, currentVer) <= 0) {
+        return;
+      }
+
       setPatchPopup({
         isForce: true,
         latestVersion: latestVer,
-        title: 'Mandatory Update Required',
+        title: data?.title || 'Mandatory Update Required',
         releaseNotes:
           data?.message ||
+          data?.releaseNotes ||
           'A mandatory application patch release must be installed before you can continue accessing the application.',
-        currentVersion: data?.currentVersion || selectedVersion,
+        currentVersion: currentVer,
       });
     };
 
     const handleOptionalUpdate = (event) => {
       const data = event.detail;
+      const latestVer = (data?.latestVersion || '1.0.0').replace(/^v/i, '').trim();
+      const currentVer = (
+        localStorage.getItem('user_app_version') ||
+        selectedVersion ||
+        '1.0.0'
+      ).replace(/^v/i, '').trim();
+
+      // If already on latest version or newer, do not show popup
+      if (compareVersions(latestVer, currentVer) <= 0) {
+        return;
+      }
+
       if (!isSkipped && !patchPopup) {
         setPatchPopup({
           isForce: false,
-          latestVersion: data?.latestVersion || '1.0.0',
-          title: 'New Update Available',
+          latestVersion: latestVer,
+          title: data?.title || 'New Update Available',
           releaseNotes:
+            data?.releaseNotes ||
             'A new optional patch release is available. You can update now or skip.',
-          currentVersion: data?.currentVersion || selectedVersion,
+          currentVersion: currentVer,
         });
       }
     };

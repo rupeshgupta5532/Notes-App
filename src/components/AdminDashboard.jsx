@@ -143,12 +143,8 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
       {/* Top Navbar */}
       <header className="bg-white border-b border-slate-200/80 sticky top-0 z-30 px-6 sm:px-10 py-3.5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-100">
-            A
-          </div>
           <div>
-            <h1 className="text-base font-bold text-slate-900 tracking-tight">Patch Admin Console</h1>
-            <p className="text-[10px] text-slate-400">Release Management & Policy Governance</p>
+            <h1 className="text-base font-bold text-slate-900 tracking-tight"> Admin Dashboard</h1>
           </div>
         </div>
 
@@ -202,11 +198,9 @@ export const AdminDashboard = ({ initialTab = 'patches' }) => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
               <div>
                 <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  Patch Release Management
+                  All Patches
                 </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Create, configure, publish, and delete mandatory or optional patch updates.
-                </p>
+                
               </div>
 
               <button

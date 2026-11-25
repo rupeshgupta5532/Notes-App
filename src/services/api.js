@@ -3,6 +3,33 @@ import { APP_CONFIG } from '../config/appConfig';
 const API_BASE_URL = APP_CONFIG.apiUrl;
 
 /**
+ * Compare two version strings. Returns 1 if v1 > v2, -1 if v1 < v2, and 0 if equal.
+ */
+export function compareVersions(v1, v2) {
+  const clean = (v) =>
+    (v || '')
+      .toString()
+      .trim()
+      .replace(/^version\s*/i, '')
+      .replace(/^v/i, '')
+      .trim()
+      .split('.')
+      .map((n) => parseInt(n, 10) || 0);
+
+  const p1 = clean(v1);
+  const p2 = clean(v2);
+  const len = Math.max(p1.length, p2.length);
+
+  for (let i = 0; i < len; i++) {
+    const num1 = p1[i] ?? 0;
+    const num2 = p2[i] ?? 0;
+    if (num1 > num2) return 1;
+    if (num1 < num2) return -1;
+  }
+  return 0;
+}
+
+/**
  * Universal API request wrapper using native fetch()
  */
 export async function apiRequest(endpoint, options = {}) {
@@ -20,7 +47,12 @@ export async function apiRequest(endpoint, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
     'X-App-Version': appVersion,
-    ...(token ? { Authorization: `Bearer ${token}`, 'x-session-id': token } : {}),
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}; version=${appVersion}`,
+          'x-session-id': token,
+        }
+      : {}),
     ...(options.headers || {}),
   };
 
@@ -37,26 +69,66 @@ export async function apiRequest(endpoint, options = {}) {
 
     // Intercept optional update notification headers from middleware
     if (response.headers.get('x-update-available') === 'true') {
-      const latestVersion = response.headers.get('x-latest-version');
-      const updateType = response.headers.get('x-update-type');
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(
-          new CustomEvent('app:optional_update_available', {
-            detail: { latestVersion, updateType, currentVersion: appVersion },
-          }),
-        );
+      const rawLatestVersion = response.headers.get('x-latest-version');
+      const latestVersion = (rawLatestVersion || '').replace(/^v/i, '').trim();
+      const currentStoredVer = (
+        localStorage.getItem('user_app_version') ||
+        appVersion ||
+        '1.0.0'
+      ).replace(/^v/i, '').trim();
+
+      // Only dispatch if latestVersion is strictly greater than current version
+      if (compareVersions(latestVersion, currentStoredVer) > 0) {
+        const updateType = response.headers.get('x-update-type') || 'OPTIONAL';
+        const rawTitle = response.headers.get('x-update-title');
+        const rawContent = response.headers.get('x-update-content');
+        let title = 'New Update Available';
+        let releaseNotes =
+          'A new optional patch release is available. You can update now or skip.';
+        try {
+          if (rawTitle) title = decodeURIComponent(rawTitle);
+        } catch {
+          if (rawTitle) title = rawTitle;
+        }
+        try {
+          if (rawContent) releaseNotes = decodeURIComponent(rawContent);
+        } catch {
+          if (rawContent) releaseNotes = rawContent;
+        }
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(
+            new CustomEvent('app:optional_update_available', {
+              detail: {
+                latestVersion,
+                updateType,
+                title,
+                releaseNotes,
+                currentVersion: currentStoredVer,
+              },
+            }),
+          );
+        }
       }
     }
 
     if (!response.ok) {
       // Intercept mandatory upgrade required (HTTP 426) from middleware
       if (response.status === 426) {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(
-            new CustomEvent('app:force_update_required', {
-              detail: data,
-            }),
-          );
+        const latestVer = (data?.latestVersion || data?.requiredVersion || '').replace(/^v/i, '').trim();
+        const currentStoredVer = (
+          localStorage.getItem('user_app_version') ||
+          appVersion ||
+          '1.0.0'
+        ).replace(/^v/i, '').trim();
+
+        if (compareVersions(latestVer, currentStoredVer) > 0) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(
+              new CustomEvent('app:force_update_required', {
+                detail: data,
+              }),
+            );
+          }
         }
       }
 
